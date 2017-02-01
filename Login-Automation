@@ -1,0 +1,57 @@
+#Successfully Login as the owner
+
+email = "owner27101991@gmail.com"
+password = "101rylozzZ"
+
+describe "RVshare" do
+  before(:all) {
+    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
+    $ie = Watir::Browser.new :ff
+    $ie.goto("https://staging.rvshare.com")
+    $ie.link(:href, "#log-in-modal").click
+    $ie.text_field(:id, "login-email").set(email)
+    $ie.text_field(:id, "login-password").set(password)
+    $ie.button(:id, "login-submit").click
+  }
+
+  describe "Visiting the dashboard" do
+    it "should let me visit the dashboard" do
+      $ie.goto("https://staging.rvshare.com/panel")
+      $ie.text.should include("Dashboard")
+    end
+  end
+
+  after :all do
+    $ie.link(:text, "logout").click
+    $ie.close
+  end
+end
+
+
+
+# Successfully Login as the Renter
+email = "renterrv27101991@gmail.com"
+password = "101rylozzZ"
+
+describe "RVshare" do
+  before(:all) {
+    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
+    $ie = Watir::Browser.new :ff
+    $ie.goto("https://staging.rvshare.com")
+    $ie.text_field(:id, "login-email").set(email)
+    $ie.text_field(:id, "login-password").set(password)
+    $ie.button(:id, "login-submit").click
+  }
+
+  describe "Visiting the dashboard" do
+    it "should let me visit the dashboard" do
+      $ie.goto("https://staging.rvshare.com/panel")
+      $ie.text.should include("Dashboard")
+    end
+  end
+
+  after :all do
+    $ie.link(:text, "logout").click
+    $ie.close
+  end
+end
