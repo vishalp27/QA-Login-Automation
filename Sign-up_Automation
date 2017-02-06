@@ -1,0 +1,38 @@
+#Sign-up as an RV Owner
+
+firstname = "Owner"
+lastname = "RV"
+email = "vis@test.com"
+password = "Rv1234567"
+
+
+describe "Visiting the new user in the Dashboard" do
+  before(:all) {
+    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
+    $ie = Watir::Browser.new :ff
+    $ie.goto("https://staging.rvshare.com")
+    $ie.link(:href, "#sign-up-modal").click
+
+    $ie.button(:id, "owner-button").click
+    $ie.link(:href, "#sign-up-modal-email").click
+    $ie.text_field(:name, "first_name").set(firstname)
+    $ie.text_field(:name, "last_name").set(lastname)
+    $ie.text_field(:name, "email").set(email)
+    $ie.text_field(:id, "signup-password-1").set(password)
+    $ie.text_field(:name, "password_confirm").set(password)
+    $ie.button(text: /Sign Up/).click
+
+
+  }
+
+
+
+ describe "Visiting the new user in the dashboard" do
+    it "should let user into the dashboard" do
+      $ie.goto("https://staging.rvshare.com/panel/?#/app/dashboard")
+      $ie.text.should include("Dashboard")
+    end
+  end
+
+
+end
