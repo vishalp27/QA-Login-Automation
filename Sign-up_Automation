@@ -36,3 +36,37 @@ describe "Visiting the new user in the Dashboard" do
 
 
 end
+
+#Sign-up as an Renter
+
+firstname = "Renter"
+lastname = "RV"
+email = "xyz@test.com"
+password = "Rv1234567"
+
+
+describe "Visiting the new user in the Dashboard" do
+it "should let Renter-user to sign-up in the dashboard" do
+  before(:all) {
+    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
+    $ie = Watir::Browser.new :ff
+    $ie.goto("https://staging.rvshare.com")
+    $ie.link(:href, "#sign-up-modal").click
+    sleep(3)
+    $ie.button(:id, "renter-button").click
+    $ie.link(:href, "#sign-up-modal-email").click
+    $ie.text_field(:name, "first_name").set(firstname)
+    $ie.text_field(:name, "last_name").set(lastname)
+    $ie.text_field(:name, "email").set(email)
+    $ie.text_field(:id, "signup-password-1").set(password)
+    $ie.text_field(:name, "password_confirm").set(password)
+    $ie.button(text: /Sign Up/).click
+    $ie.text.should include("Dashboard")
+
+
+  }
+end
+end
+
+
+
