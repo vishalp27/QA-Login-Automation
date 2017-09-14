@@ -1,72 +1,56 @@
-#Sign-up as an RV Owner
+require 'rubygems'
+require 'taza'
+require 'watir/ie'
 
-firstname = "Owner"
-lastname = "RV"
-email = "vis@test.com"
-password = "Rv1234567"
+module Application
+  include ForwardInitialization
 
+  class Application < ::Taza::Site
+    attr_accessor :env, :username, :password, :url, :br
+    def initialize_browser
+    # this is where we put specific startup behavior
+      login('myusername')
+    end
+    
+    def login(username='default_username', env='default_env')
+      @username =  username.downcase
+      @env = env.downcase
+      @password = 'mypassword'
+      @url = 'myurl.com'
 
-describe "Visiting the new user in the Dashboard" do
-  before(:all) {
-    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
-    $ie = Watir::Browser.new :ff
-    $ie.goto("https://staging.rvshare.com")
-    $ie.link(:href, "#sign-up-modal").click
-
-    $ie.button(:id, "owner-button").click
-    $ie.link(:href, "#sign-up-modal-email").click
-    $ie.text_field(:name, "first_name").set(firstname)
-    $ie.text_field(:name, "last_name").set(lastname)
-    $ie.text_field(:name, "email").set(email)
-    $ie.text_field(:id, "signup-password-1").set(password)
-    $ie.text_field(:name, "password_confirm").set(password)
-    $ie.button(text: /Sign Up/).click
-
-
-  }
-
-
-
- describe "Visiting the new user in the dashboard" do
-    it "should let user into the dashboard" do
-      $ie.goto("https://staging.rvshare.com/panel/?#/app/dashboard")
-      $ie.text.should include("Dashboard")
+      puts "Opening browser to #{@url} using the #{@username} user"
+      # spawn new thread to handle the basic authentication popup using 
+      # supplied credentials
+      
+      a = Thread.new {
+        puts "spawning new thread to handle basic authentication"
+        login_title = "Connect to #{@url}"
+        login_script = File.join(File.dirname(__FILE__), "handlers", 'handle_logon.rb')
+        system("ruby \"#{login_script}\" \"#{login_title}\" \"#{@username}\" \"#{@password}\"")
+      }
+      
+      if env == 'other' # some environment that requires dismissing security dialog box
+        if self.installed_ie_version == '6'
+          puts "spawning thread to kill IE6 security alert"
+          security_script = File.join(File.dirname(__FILE__), "handlers", 'handle_security_alert.rb')
+          b = Thread.new {
+            system("ruby \"#{login_script}\"")
+          }
+          @br = Watir::IE.start_process(@url)
+        elsif self.installed_ie_version == '7'
+          @br = Watir::IE.start_process(@url)
+          @br.link(:id, 'overridelink').click
+        else 
+          raise "Could not determine IE version"
+        end
+      else
+        @br = Watir::IE.start_process(@url)
+      end
+      
+      puts "Number of threads running #{Thread.list.size}"
+      a.join
+      b.join if (env == 'uat') and (self.installed_ie_version == '6')
+      puts "end login"
     end
   end
-
-
 end
-
-#Sign-up as an Renter
-
-firstname = "Renter"
-lastname = "RV"
-email = "xyz@test.com"
-password = "Rv1234567"
-
-
-describe "Visiting the new user in the Dashboard" do
-it "should let Renter-user to sign-up in the dashboard" do
-  before(:all) {
-    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
-    $ie = Watir::Browser.new :ff
-    $ie.goto("https://staging.rvshare.com")
-    $ie.link(:href, "#sign-up-modal").click
-    sleep(3)
-    $ie.button(:id, "renter-button").click
-    $ie.link(:href, "#sign-up-modal-email").click
-    $ie.text_field(:name, "first_name").set(firstname)
-    $ie.text_field(:name, "last_name").set(lastname)
-    $ie.text_field(:name, "email").set(email)
-    $ie.text_field(:id, "signup-password-1").set(password)
-    $ie.text_field(:name, "password_confirm").set(password)
-    $ie.button(text: /Sign Up/).click
-    $ie.text.should include("Dashboard")
-
-
-  }
-end
-end
-
-
-
