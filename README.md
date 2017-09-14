@@ -10,7 +10,6 @@ browser.goto 'watir.com'
 browser.link(text: 'Documentation').click
 
 puts browser.title
-# => 'Documentation – Watir Project...'
 browser.close
 
 Watir also known as Web Application Testing in Ruby is an API which is powered by Selenium. It uses WatirSpec for testing. The above information is quoted from https://github.com/watir/watir
