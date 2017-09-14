@@ -1,57 +1,56 @@
-#Successfully Login as the owner
+require 'rubygems'
+require 'taza'
+require 'watir/ie'
 
-email = "owner27101991@gmail.com"
-password = "101rylozzZ"
+module Application
+  include ForwardInitialization
 
-describe "RVshare" do
-  before(:all) {
-    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
-    $ie = Watir::Browser.new :ff
-    $ie.goto("https://staging.rvshare.com")
-    $ie.link(:href, "#log-in-modal").click
-    $ie.text_field(:id, "login-email").set(email)
-    $ie.text_field(:id, "login-password").set(password)
-    $ie.button(:id, "login-submit").click
-  }
-
-  describe "Visiting the dashboard" do
-    it "should let me visit the dashboard" do
-      $ie.goto("https://staging.rvshare.com/panel")
-      $ie.text.should include("Dashboard")
+  class Application < ::Taza::Site
+    attr_accessor :env, :username, :password, :url, :br
+    def initialize_browser
+    # this is where we put specific startup behavior
+      login('myusername')
     end
-  end
+    
+    def login(username='default_username', env='default_env')
+      @username =  username.downcase
+      @env = env.downcase
+      @password = 'mypassword'
+      @url = 'myurl.com'
 
-  after :all do
-    $ie.link(:text, "logout").click
-    $ie.close
-  end
-end
-
-
-
-# Successfully Login as the Renter
-email = "renterrv27101991@gmail.com"
-password = "101rylozzZ"
-
-describe "RVshare" do
-  before(:all) {
-    caps = Selenium::WebDriver::Remote::Capabilities.ie(:ignoreProtectedModeSettings => true)
-    $ie = Watir::Browser.new :ff
-    $ie.goto("https://staging.rvshare.com")
-    $ie.text_field(:id, "login-email").set(email)
-    $ie.text_field(:id, "login-password").set(password)
-    $ie.button(:id, "login-submit").click
-  }
-
-  describe "Visiting the dashboard" do
-    it "should let me visit the dashboard" do
-      $ie.goto("https://staging.rvshare.com/panel")
-      $ie.text.should include("Dashboard")
+      puts "Opening browser to #{@url} using the #{@username} user"
+      # spawn new thread to handle the basic authentication popup using 
+      # supplied credentials
+      
+      a = Thread.new {
+        puts "spawning new thread to handle basic authentication"
+        login_title = "Connect to #{@url}"
+        login_script = File.join(File.dirname(__FILE__), "handlers", 'handle_logon.rb')
+        system("ruby \"#{login_script}\" \"#{login_title}\" \"#{@username}\" \"#{@password}\"")
+      }
+      
+      if env == 'other' # some environment that requires dismissing security dialog box
+        if self.installed_ie_version == '6'
+          puts "spawning thread to kill IE6 security alert"
+          security_script = File.join(File.dirname(__FILE__), "handlers", 'handle_security_alert.rb')
+          b = Thread.new {
+            system("ruby \"#{login_script}\"")
+          }
+          @br = Watir::IE.start_process(@url)
+        elsif self.installed_ie_version == '7'
+          @br = Watir::IE.start_process(@url)
+          @br.link(:id, 'overridelink').click
+        else 
+          raise "Could not determine IE version"
+        end
+      else
+        @br = Watir::IE.start_process(@url)
+      end
+      
+      puts "Number of threads running #{Thread.list.size}"
+      a.join
+      b.join if (env == 'uat') and (self.installed_ie_version == '6')
+      puts "end login"
     end
-  end
-
-  after :all do
-    $ie.link(:text, "logout").click
-    $ie.close
   end
 end
